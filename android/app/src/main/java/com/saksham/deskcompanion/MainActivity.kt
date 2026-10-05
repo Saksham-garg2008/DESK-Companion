@@ -199,6 +199,7 @@ class MainActivity : AppCompatActivity() {
         port: Int,
         code: String
     ) {
+        println("[Companion] pairWithDesk called: host=$host port=$port code=$code")
 
         showStatus("Connecting to DESK...")
 
@@ -262,7 +263,7 @@ class MainActivity : AppCompatActivity() {
                     return@execute
                 }
 
-                val data = json.getJSONObject("data")
+                val data = json.getJSONObject("device")
 
                 val deviceId =
                     data.getString("device_id")
