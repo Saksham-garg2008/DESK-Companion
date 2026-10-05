@@ -4,9 +4,9 @@ on:
   release:
     types:
       - published
+
 permissions:
   contents: write
-
 
 jobs:
   build:
@@ -37,6 +37,22 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Prepare release signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.DESK_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.DESK_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.DESK_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.DESK_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > app/desk-companion-release.jks
+
+          cat > keystore.properties <<EOF
+          storeFile=desk-companion-release.jks
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+
       - name: Build release APK
         run: ./gradlew assembleRelease
 
@@ -54,6 +70,17 @@ jobs:
              "app/build/outputs/apk/release/DESK-Companion-${VERSION}.apk"
 
           echo "APK found: $APK"
+
+      - name: Verify APK signature
+        run: |
+          APK=$(find app/build/outputs/apk/release -maxdepth 1 -type f -name "*.apk" ! -name "DESK-Companion-*.apk" | head -n 1)
+
+          if [ -z "$APK" ]; then
+            echo "No APK found for signature verification."
+            exit 1
+          fi
+
+          $ANDROID_HOME/build-tools/35.0.0/apksigner verify --verbose "$APK"
 
       - name: Upload APK to GitHub Release
         env:
