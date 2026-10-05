@@ -37,20 +37,20 @@ jobs:
       - name: Build release APK
         run: ./gradlew assembleRelease
 
-      - - name: Rename APK
-          run: |
-            VERSION="${GITHUB_REF_NAME}"
-            APK=$(find app/build/outputs/apk/release -maxdepth 1 -type f -name "*.apk" | head -n 1)
+      - name: Rename APK
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          APK=$(find app/build/outputs/apk/release -maxdepth 1 -type f -name "*.apk" | head -n 1)
 
-            if [ -z "$APK" ]; then
-              echo "No APK found."
-              exit 1
-            fi
+          if [ -z "$APK" ]; then
+            echo "No APK found."
+            exit 1
+          fi
 
-            cp "$APK" \
-               "app/build/outputs/apk/release/DESK-Companion-${VERSION}.apk"
+          cp "$APK" \
+             "app/build/outputs/apk/release/DESK-Companion-${VERSION}.apk"
 
-            echo "APK found: $APK"
+          echo "APK found: $APK"
 
       - name: Upload APK to GitHub Release
         env:
