@@ -1,8 +1,11 @@
 package com.saksham.deskcompanion
 
+import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import android.widget.Button
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -11,6 +14,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.setPadding
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
+import com.saksham.deskcompanion.screens.AgentsScreen
+import com.saksham.deskcompanion.screens.ChatScreen
+import com.saksham.deskcompanion.screens.HomeScreen
+import com.saksham.deskcompanion.screens.MemoryScreen
+import com.saksham.deskcompanion.screens.SettingsScreen
+import com.saksham.deskcompanion.screens.WorkspaceScreen
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -24,6 +33,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var qrScanner: ActivityResultLauncher<ScanOptions>
 
     private val executor = Executors.newSingleThreadExecutor()
+
+    private lateinit var screenContainer: FrameLayout
+    private lateinit var navigationBar: LinearLayout
+
+    private lateinit var connectedHost: String
+    private var connectedPort: Int = 8765
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -389,11 +404,7 @@ class MainActivity : AppCompatActivity() {
             text = "Continue"
 
             setOnClickListener {
-                Toast.makeText(
-                    this@MainActivity,
-                    "Companion interface coming next.",
-                    Toast.LENGTH_SHORT
-                ).show()
+                buildMainScreen()
             }
         }
 
@@ -417,8 +428,192 @@ class MainActivity : AppCompatActivity() {
     }
 
     // -------------------------------------------------------------------------
+    // Main Companion interface
+    // -------------------------------------------------------------------------
+
+    private fun buildMainScreen() {
+
+        val credentials = getSavedCredentials()
+
+        if (credentials == null) {
+            buildPairingScreen()
+            return
+        }
+
+        connectedHost = credentials.host
+        connectedPort = credentials.port
+
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+
+        screenContainer = FrameLayout(this)
+
+        navigationBar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setBackgroundColor(Color.WHITE)
+        }
+
+        root.addView(
+            screenContainer,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1f
+            )
+        )
+
+        root.addView(
+            navigationBar,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                64
+            )
+        )
+
+        setContentView(root)
+
+        buildNavigation()
+
+        showHomeScreen()
+    }
+
+    private fun buildNavigation() {
+
+        navigationBar.removeAllViews()
+
+        addNavigationButton("Home") {
+            showHomeScreen()
+        }
+
+        addNavigationButton("Agents") {
+            showAgentsScreen()
+        }
+
+        addNavigationButton("Chat") {
+            showChatScreen()
+        }
+
+        addNavigationButton("Workspace") {
+            showWorkspaceScreen()
+        }
+
+        addNavigationButton("Memory") {
+            showMemoryScreen()
+        }
+
+        addNavigationButton("Settings") {
+            showSettingsScreen()
+        }
+    }
+
+    private fun addNavigationButton(
+        title: String,
+        action: () -> Unit
+    ) {
+
+        val button = TextView(this).apply {
+            text = title
+            textSize = 13f
+            gravity = Gravity.CENTER
+            setTextColor(Color.DKGRAY)
+            setPadding(8, 0, 8, 0)
+
+            setOnClickListener {
+                action()
+            }
+        }
+
+        navigationBar.addView(
+            button,
+            LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                1f
+            )
+        )
+    }
+
+    // -------------------------------------------------------------------------
+    // Screen switching
+    // -------------------------------------------------------------------------
+
+    private fun showScreen(screen: android.view.View) {
+
+        screenContainer.removeAllViews()
+
+        screenContainer.addView(
+            screen,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        )
+    }
+
+    private fun showHomeScreen() {
+
+        showScreen(
+            HomeScreen(
+                this,
+                connectedHost,
+                connectedPort
+            )
+        )
+    }
+
+    private fun showAgentsScreen() {
+
+        showScreen(
+            AgentsScreen(this)
+        )
+    }
+
+    private fun showChatScreen() {
+
+        showScreen(
+            ChatScreen(this)
+        )
+    }
+
+    private fun showWorkspaceScreen() {
+
+        showScreen(
+            WorkspaceScreen(this)
+        )
+    }
+
+    private fun showMemoryScreen() {
+
+        showScreen(
+            MemoryScreen(this)
+        )
+    }
+
+    private fun showSettingsScreen() {
+
+        showScreen(
+            SettingsScreen(
+                this,
+                connectedHost,
+                connectedPort
+            ) {
+                disconnect()
+            }
+        )
+    }
+
+    // -------------------------------------------------------------------------
     // Credentials
     // -------------------------------------------------------------------------
+
+    private data class SavedCredentials(
+        val host: String,
+        val port: Int,
+        val deviceId: String,
+        val token: String
+    )
 
     private fun saveCredentials(
         host: String,
@@ -439,7 +634,7 @@ class MainActivity : AppCompatActivity() {
             .apply()
     }
 
-    private fun hasSavedCredentials(): Boolean {
+    private fun getSavedCredentials(): SavedCredentials? {
 
         val preferences =
             getSharedPreferences(
@@ -456,9 +651,30 @@ class MainActivity : AppCompatActivity() {
         val token =
             preferences.getString("token", null)
 
-        return !host.isNullOrBlank() &&
-            !deviceId.isNullOrBlank() &&
-            !token.isNullOrBlank()
+        if (
+            host.isNullOrBlank() ||
+            deviceId.isNullOrBlank() ||
+            token.isNullOrBlank()
+        ) {
+            return null
+        }
+
+        val port =
+            preferences.getInt(
+                "port",
+                8765
+            )
+
+        return SavedCredentials(
+            host = host,
+            port = port,
+            deviceId = deviceId,
+            token = token
+        )
+    }
+
+    private fun hasSavedCredentials(): Boolean {
+        return getSavedCredentials() != null
     }
 
     private fun disconnect() {
