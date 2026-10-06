@@ -39,6 +39,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var connectedHost: String
     private var connectedPort: Int = 8765
+    private lateinit var deskApi: DeskApi
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -442,6 +443,12 @@ class MainActivity : AppCompatActivity() {
 
         connectedHost = credentials.host
         connectedPort = credentials.port
+        deskApi = DeskApi(
+            host = credentials.host,
+            port = credentials.port,
+            deviceId = credentials.deviceId,
+            token = credentials.token
+        )
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -558,7 +565,8 @@ class MainActivity : AppCompatActivity() {
             HomeScreen(
                 this,
                 connectedHost,
-                connectedPort
+                connectedPort,
+                deskApi
             )
         )
     }
@@ -566,7 +574,7 @@ class MainActivity : AppCompatActivity() {
     private fun showAgentsScreen() {
 
         showScreen(
-            AgentsScreen(this)
+            AgentsScreen(this, deskApi)
         )
     }
 
@@ -580,14 +588,14 @@ class MainActivity : AppCompatActivity() {
     private fun showWorkspaceScreen() {
 
         showScreen(
-            WorkspaceScreen(this)
+            WorkspaceScreen(this, deskApi)
         )
     }
 
     private fun showMemoryScreen() {
 
         showScreen(
-            MemoryScreen(this)
+            MemoryScreen(this, deskApi)
         )
     }
 

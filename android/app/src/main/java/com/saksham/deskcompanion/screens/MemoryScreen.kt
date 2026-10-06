@@ -5,12 +5,22 @@ import android.graphics.Color
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.setPadding
+import com.saksham.deskcompanion.DeskApi
+import java.util.concurrent.Executors
 
 class MemoryScreen(
-    context: Context
+    context: Context,
+    private val api: DeskApi
 ) : LinearLayout(context) {
 
+    private val executor =
+        Executors.newSingleThreadExecutor()
+
+    private val content =
+        TextView(context)
+
     init {
+
         orientation = VERTICAL
         setPadding(32)
 
@@ -25,19 +35,77 @@ class MemoryScreen(
 
         addView(
             TextView(context).apply {
-                text = "DESK Memory"
+                text = "DESK Agent Memory"
                 textSize = 18f
                 setTextColor(Color.BLACK)
-                setPadding(0, 0, 0, 12)
+                setPadding(0, 0, 0, 16)
             }
         )
 
-        addView(
-            TextView(context).apply {
-                text = "Memory from DESK will appear here."
-                textSize = 15f
-                setTextColor(Color.GRAY)
+        content.apply {
+            text = "Loading..."
+            textSize = 15f
+            setTextColor(Color.DKGRAY)
+        }
+
+        addView(content)
+
+        loadMemory()
+    }
+
+    private fun loadMemory() {
+
+        executor.execute {
+
+            try {
+
+                val agents =
+                    api.getAgents()
+
+                if (agents.isEmpty()) {
+
+                    post {
+                        content.text =
+                            "No agents available."
+                    }
+
+                    return@execute
+                }
+
+                val agent =
+                    agents.first()
+
+                val memory =
+                    api.getMemory(agent.name)
+
+                post {
+
+                    content.text =
+                        if (memory.isBlank()) {
+                            "${agent.name}\n\nMemory is empty."
+                        } else {
+                            "${agent.name}\n\n$memory"
+                        }
+                }
+
+            } catch (exception: Exception) {
+
+                post {
+
+                    content.text =
+                        exception.message
+                            ?: "Could not load memory."
+
+                    content.setTextColor(
+                        Color.RED
+                    )
+                }
             }
-        )
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        executor.shutdownNow()
+        super.onDetachedFromWindow()
     }
 }

@@ -2,17 +2,26 @@ package com.saksham.deskcompanion.screens
 
 import android.content.Context
 import android.graphics.Color
-import android.view.Gravity
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.setPadding
+import com.saksham.deskcompanion.DeskAgent
+import com.saksham.deskcompanion.DeskApi
+import java.util.concurrent.Executors
 
 class AgentsScreen(
-    context: Context
+    context: Context,
+    private val api: DeskApi
 ) : LinearLayout(context) {
 
+    private val executor =
+        Executors.newSingleThreadExecutor()
+
+    private val container =
+        LinearLayout(context)
+
     init {
+
         orientation = VERTICAL
         setPadding(32)
 
@@ -27,34 +36,141 @@ class AgentsScreen(
 
         addView(
             TextView(context).apply {
-                text = "Your DESK agents will appear here."
+                text = "Agents currently configured in DESK."
                 textSize = 16f
                 setTextColor(Color.DKGRAY)
                 setPadding(0, 0, 0, 24)
             }
         )
 
-        addView(
+        container.orientation = VERTICAL
+
+        addView(container)
+
+        loadAgents()
+    }
+
+    private fun loadAgents() {
+
+        executor.execute {
+
+            try {
+
+                val agents =
+                    api.getAgents()
+
+                post {
+                    displayAgents(agents)
+                }
+
+            } catch (exception: Exception) {
+
+                post {
+                    showError(
+                        exception.message
+                            ?: "Could not load agents."
+                    )
+                }
+            }
+        }
+    }
+
+    private fun displayAgents(
+        agents: List<DeskAgent>
+    ) {
+
+        container.removeAllViews()
+
+        if (agents.isEmpty()) {
+
+            container.addView(
+                TextView(context).apply {
+                    text = "No agents found."
+                    textSize = 15f
+                    setTextColor(Color.GRAY)
+                }
+            )
+
+            return
+        }
+
+        for (agent in agents) {
+
+            val card =
+                LinearLayout(context).apply {
+
+                    orientation = VERTICAL
+                    setPadding(
+                        20,
+                        20,
+                        20,
+                        20
+                    )
+
+                    setBackgroundColor(
+                        Color.rgb(
+                            245,
+                            245,
+                            245
+                        )
+                    )
+                }
+
+            card.addView(
+                TextView(context).apply {
+                    text = agent.name
+                    textSize = 20f
+                    setTextColor(Color.BLACK)
+                }
+            )
+
+            card.addView(
+                TextView(context).apply {
+                    text =
+                        "${agent.backend} • ${agent.model}"
+                    textSize = 14f
+                    setTextColor(Color.DKGRAY)
+                    setPadding(
+                        0,
+                        8,
+                        0,
+                        0
+                    )
+                }
+            )
+
+            container.addView(
+                card,
+                LayoutParams(
+                    LayoutParams.MATCH_PARENT,
+                    LayoutParams.WRAP_CONTENT
+                ).apply {
+                    setMargins(
+                        0,
+                        0,
+                        0,
+                        16
+                    )
+                }
+            )
+        }
+    }
+
+    private fun showError(message: String) {
+
+        container.removeAllViews()
+
+        container.addView(
             TextView(context).apply {
-                text = "No agent data loaded yet."
+                text = message
                 textSize = 15f
-                setTextColor(Color.GRAY)
-                setPadding(0, 0, 0, 32)
+                setTextColor(Color.RED)
             }
         )
+    }
 
-        addView(
-            Button(context).apply {
-                text = "+ Create Agent"
-                isEnabled = false
-            }
-        )
-
-        addView(
-            Button(context).apply {
-                text = "Fire Agent"
-                isEnabled = false
-            }
-        )
+    override fun onDetachedFromWindow() {
+        executor.shutdownNow()
+        super.onDetachedFromWindow()
     }
 }
