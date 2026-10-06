@@ -7,6 +7,8 @@ import android.widget.TextView
 import androidx.core.view.setPadding
 import com.saksham.deskcompanion.DeskAgent
 import com.saksham.deskcompanion.DeskApi
+import android.app.AlertDialog
+import android.widget.ScrollView
 import java.util.concurrent.Executors
 
 class AgentsScreen(
@@ -139,6 +141,10 @@ class AgentsScreen(
                 }
             )
 
+            card.setOnClickListener {
+                openAgent(agent)
+            }
+
             container.addView(
                 card,
                 LayoutParams(
@@ -156,6 +162,7 @@ class AgentsScreen(
         }
     }
 
+
     private fun showError(message: String) {
 
         container.removeAllViews()
@@ -167,6 +174,95 @@ class AgentsScreen(
                 setTextColor(Color.RED)
             }
         )
+    }
+
+    private fun openAgent(
+        agent: DeskAgent
+    ) {
+
+        val loadingDialog =
+            AlertDialog.Builder(context)
+                .setTitle(agent.name)
+                .setMessage("Loading agent...")
+                .setCancelable(false)
+                .create()
+
+        loadingDialog.show()
+
+        executor.execute {
+
+            try {
+
+                val details =
+                    api.getAgent(agent.name)
+
+                post {
+
+                    loadingDialog.dismiss()
+
+                    val prompt =
+                        details.systemPrompt
+                            ?.takeIf { it.isNotBlank() }
+                            ?: "No system prompt found."
+
+                    val textView =
+                        TextView(context).apply {
+
+                            text = prompt
+
+                            textSize = 14f
+
+                            setTextColor(
+                                Color.DKGRAY
+                            )
+
+                            setPadding(
+                                24,
+                                24,
+                                24,
+                                24
+                            )
+
+                            setTextIsSelectable(true)
+                        }
+
+                    val scrollView =
+                        ScrollView(context).apply {
+                            addView(textView)
+                        }
+
+                    AlertDialog.Builder(context)
+                        .setTitle(
+                            "${agent.name} — System Prompt"
+                        )
+                        .setView(scrollView)
+                        .setPositiveButton(
+                            "Close",
+                            null
+                        )
+                        .show()
+                }
+
+            } catch (exception: Exception) {
+
+                post {
+
+                    loadingDialog.dismiss()
+
+                    AlertDialog.Builder(context)
+                        .setTitle("Could not open agent")
+                        .setMessage(
+                            exception.message
+                                ?: "Unknown error"
+                        )
+                        .setPositiveButton(
+                            "OK",
+                            null
+                        )
+                        .show()
+                }
+            }
+        }
     }
 
     override fun onDetachedFromWindow() {

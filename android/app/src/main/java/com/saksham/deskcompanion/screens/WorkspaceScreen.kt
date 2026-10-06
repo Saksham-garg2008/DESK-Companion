@@ -1,11 +1,14 @@
 package com.saksham.deskcompanion.screens
 
+import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Color
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.view.setPadding
 import com.saksham.deskcompanion.DeskApi
+import com.saksham.deskcompanion.WorkspaceItem
 import java.util.concurrent.Executors
 
 class WorkspaceScreen(
@@ -59,72 +62,212 @@ class WorkspaceScreen(
                     api.getWorkspace()
 
                 post {
-
-                    container.removeAllViews()
-
-                    if (items.isEmpty()) {
-
-                        container.addView(
-                            TextView(context).apply {
-                                text =
-                                    "Workspace is empty."
-                                textSize = 15f
-                                setTextColor(
-                                    Color.GRAY
-                                )
-                            }
-                        )
-
-                        return@post
-                    }
-
-                    for (item in items) {
-
-                        container.addView(
-                            TextView(context).apply {
-
-                                text =
-                                    "${item.path}\n" +
-                                    "${item.size} bytes"
-
-                                textSize = 15f
-                                setTextColor(
-                                    Color.DKGRAY
-                                )
-
-                                setPadding(
-                                    0,
-                                    0,
-                                    0,
-                                    16
-                                )
-                            }
-                        )
-                    }
+                    displayWorkspace(items)
                 }
 
             } catch (exception: Exception) {
 
                 post {
-
-                    container.removeAllViews()
-
-                    container.addView(
-                        TextView(context).apply {
-                            text =
-                                exception.message
-                                    ?: "Could not load workspace."
-                            textSize = 15f
-                            setTextColor(Color.RED)
-                        }
+                    showError(
+                        exception.message
+                            ?: "Could not load workspace."
                     )
                 }
             }
         }
     }
 
+    private fun displayWorkspace(
+        items: List<WorkspaceItem>
+    ) {
+
+        container.removeAllViews()
+
+        if (items.isEmpty()) {
+
+            container.addView(
+                TextView(context).apply {
+                    text = "Workspace is empty."
+                    textSize = 15f
+                    setTextColor(Color.GRAY)
+                }
+            )
+
+            return
+        }
+
+        for (item in items) {
+
+            val fileView =
+                TextView(context).apply {
+
+                    text =
+                        "${item.path}\n" +
+                        "${item.size} bytes"
+
+                    textSize = 15f
+                    setTextColor(Color.DKGRAY)
+
+                    setPadding(
+                        20,
+                        20,
+                        20,
+                        20
+                    )
+
+                    setBackgroundColor(
+                        Color.rgb(
+                            245,
+                            245,
+                            245
+                        )
+                    )
+
+                    isClickable = true
+
+                    setOnClickListener {
+                        openFile(item)
+                    }
+                }
+
+            container.addView(
+                fileView,
+                LayoutParams(
+                    LayoutParams.MATCH_PARENT,
+                    LayoutParams.WRAP_CONTENT
+                ).apply {
+                    setMargins(
+                        0,
+                        0,
+                        0,
+                        16
+                    )
+                }
+            )
+        }
+    }
+
+    private fun openFile(
+        item: WorkspaceItem
+    ) {
+
+        val loadingDialog =
+            AlertDialog.Builder(context)
+                .setTitle(item.name)
+                .setMessage("Loading file...")
+                .setCancelable(false)
+                .create()
+
+        loadingDialog.show()
+
+        executor.execute {
+
+            try {
+
+                val content =
+                    api.getWorkspaceFile(
+                        item.path
+                    )
+
+                post {
+
+                    loadingDialog.dismiss()
+
+                    showFileContent(
+                        item.name,
+                        content
+                    )
+                }
+
+            } catch (exception: Exception) {
+
+                post {
+
+                    loadingDialog.dismiss()
+
+                    showErrorDialog(
+                        exception.message
+                            ?: "Could not open file."
+                    )
+                }
+            }
+        }
+    }
+
+    private fun showFileContent(
+        name: String,
+        content: String
+    ) {
+
+        val textView =
+            TextView(context).apply {
+
+                text = content
+
+                textSize = 14f
+
+                setTextColor(
+                    Color.DKGRAY
+                )
+
+                setPadding(
+                    24,
+                    24,
+                    24,
+                    24
+                )
+
+                setTextIsSelectable(true)
+            }
+
+        val scrollView =
+            ScrollView(context).apply {
+                addView(textView)
+            }
+
+        AlertDialog.Builder(context)
+            .setTitle(name)
+            .setView(scrollView)
+            .setPositiveButton(
+                "Close",
+                null
+            )
+            .show()
+    }
+
+    private fun showError(
+        message: String
+    ) {
+
+        container.removeAllViews()
+
+        container.addView(
+            TextView(context).apply {
+                text = message
+                textSize = 15f
+                setTextColor(Color.RED)
+            }
+        )
+    }
+
+    private fun showErrorDialog(
+        message: String
+    ) {
+
+        AlertDialog.Builder(context)
+            .setTitle("Could not open file")
+            .setMessage(message)
+            .setPositiveButton(
+                "OK",
+                null
+            )
+            .show()
+    }
+
     override fun onDetachedFromWindow() {
+
         executor.shutdownNow()
+
         super.onDetachedFromWindow()
     }
 }

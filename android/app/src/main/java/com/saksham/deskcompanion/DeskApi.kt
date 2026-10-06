@@ -13,7 +13,8 @@ data class DeskAgent(
     val backend: String,
     val model: String,
     val responseLength: String,
-    val chromeProfile: String?
+    val chromeProfile: String?,
+    val systemPrompt: String? = null
 )
 
 data class WorkspaceItem(
@@ -208,6 +209,71 @@ class DeskApi(
 
         return result
     }
+
+
+    fun getWorkspaceFile(
+        filePath: String
+    ): String {
+
+        val encodedPath =
+            URLEncoder.encode(
+                filePath,
+                "UTF-8"
+            ).replace("+", "%20")
+
+        return request(
+            "GET",
+            "/api/workspace/file/$encodedPath"
+        )
+            .getJSONObject("data")
+            .optString("content")
+    }
+
+
+    fun getAgent(
+        agentName: String
+    ): DeskAgent {
+
+        val encoded =
+            URLEncoder.encode(
+                agentName,
+                "UTF-8"
+            ).replace("+", "%20")
+
+        val data =
+            request(
+                "GET",
+                "/api/agents/$encoded"
+            )
+                .getJSONObject("data")
+
+        return DeskAgent(
+            name = data.optString("name"),
+            color = data.optString(
+                "color",
+                "#5B7FA6"
+            ),
+            backend = data.optString("backend"),
+            model = data.optString("model"),
+            responseLength =
+                data.optString(
+                    "response_length",
+                    "standard"
+                ),
+            chromeProfile =
+                if (data.isNull("chrome_profile")) {
+                    null
+                } else {
+                    data.optString("chrome_profile")
+                },
+            systemPrompt =
+                data.optString(
+                    "system_prompt",
+                    ""
+                )
+        )
+    }
+        
 
     fun getMemory(
         agentName: String
