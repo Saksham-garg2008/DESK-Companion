@@ -104,6 +104,7 @@ class MemoryScreen(
             setTextColor(Color.DKGRAY)
         }
 
+        // Scrollable memory area
         val memoryScroll =
             ScrollView(context).apply {
 
@@ -117,7 +118,15 @@ class MemoryScreen(
             }
 
         memoryContainer.addView(
+            memoryScroll,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1f
+            )
+        )
 
+        // Add memory container to screen
         addView(
             memoryContainer,
             LinearLayout.LayoutParams(
@@ -126,6 +135,7 @@ class MemoryScreen(
                 1f
             )
         )
+
         loadAgents()
     }
 
