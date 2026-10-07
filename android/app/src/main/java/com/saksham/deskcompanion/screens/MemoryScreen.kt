@@ -107,14 +107,7 @@ class MemoryScreen(
         // Scrollable memory area
         val memoryScroll =
             ScrollView(context).apply {
-
-                addView(
-                    memoryContent,
-                    ScrollView.LayoutParams(
-                        ScrollView.LayoutParams.MATCH_PARENT,
-                        ScrollView.LayoutParams.WRAP_CONTENT
-                    )
-                )
+                addView(memoryContent)
             }
 
         memoryContainer.addView(
