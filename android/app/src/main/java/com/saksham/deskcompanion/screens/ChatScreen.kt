@@ -122,7 +122,7 @@ class ChatScreen(
 
         messageInput = EditText(context).apply {
             hint = "Message..."
-            singleLine = false
+            setSingleLine(false)
             maxLines = 4
         }
 

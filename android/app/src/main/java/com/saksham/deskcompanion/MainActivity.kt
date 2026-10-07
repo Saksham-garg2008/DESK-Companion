@@ -581,7 +581,7 @@ class MainActivity : AppCompatActivity() {
     private fun showChatScreen() {
 
         showScreen(
-            ChatScreen(this)
+            ChatScreen(this, deskApi)
         )
     }
 
