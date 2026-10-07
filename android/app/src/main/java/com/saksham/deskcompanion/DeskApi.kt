@@ -24,6 +24,13 @@ data class WorkspaceItem(
     val size: Long
 )
 
+data class ChatResponse(
+    val agent: String,
+    val response: String,
+    val backend: String,
+    val model: String
+)
+
 class DeskApi(
     private val host: String,
     private val port: Int,
@@ -271,6 +278,44 @@ class DeskApi(
                     "system_prompt",
                     ""
                 )
+        )
+    }
+
+    fun sendChat(
+        agentName: String,
+        message: String,
+        images: List<Pair<String, String>> = emptyList()
+    ): ChatResponse {
+
+        val body = JSONObject().apply {
+            put("agent", agentName)
+            put("message", message)
+
+            val imageArray = JSONArray()
+
+            for ((mime, data) in images) {
+                imageArray.put(
+                    JSONObject().apply {
+                        put("mime", mime)
+                        put("data", data)
+                    }
+                )
+            }
+
+            put("images", imageArray)
+        }
+
+        val data = request(
+            "POST",
+            "/api/chat",
+            body
+        ).getJSONObject("data")
+
+        return ChatResponse(
+            agent = data.optString("agent"),
+            response = data.optString("response"),
+            backend = data.optString("backend"),
+            model = data.optString("model")
         )
     }
         
