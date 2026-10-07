@@ -2,9 +2,12 @@ package com.saksham.deskcompanion.screens
 
 import android.content.Context
 import android.graphics.Color
+import android.view.View
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.view.setPadding
+import com.saksham.deskcompanion.DeskAgent
 import com.saksham.deskcompanion.DeskApi
 import java.util.concurrent.Executors
 
@@ -16,7 +19,16 @@ class MemoryScreen(
     private val executor =
         Executors.newSingleThreadExecutor()
 
-    private val content =
+    private val agentContainer =
+        LinearLayout(context)
+
+    private val memoryContainer =
+        LinearLayout(context)
+
+    private val memoryTitle =
+        TextView(context)
+
+    private val memoryContent =
         TextView(context)
 
     init {
@@ -24,6 +36,7 @@ class MemoryScreen(
         orientation = VERTICAL
         setPadding(32)
 
+        // Page title
         addView(
             TextView(context).apply {
                 text = "Memory"
@@ -33,27 +46,98 @@ class MemoryScreen(
             }
         )
 
+        // Description
         addView(
             TextView(context).apply {
-                text = "DESK Agent Memory"
-                textSize = 18f
-                setTextColor(Color.BLACK)
-                setPadding(0, 0, 0, 16)
+                text = "Select an agent to view its DESK memory."
+                textSize = 16f
+                setTextColor(Color.DKGRAY)
+                setPadding(0, 0, 0, 20)
             }
         )
 
-        content.apply {
-            text = "Loading..."
+        // Agent selector
+        agentContainer.orientation = VERTICAL
+
+        addView(
+            agentContainer,
+            LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
+            )
+        )
+
+        // Memory view
+        memoryContainer.orientation = VERTICAL
+        memoryContainer.visibility = View.GONE
+
+        // Back button
+        val backButton =
+            TextView(context).apply {
+                text = "← All agents"
+                textSize = 16f
+                setTextColor(Color.BLACK)
+                setPadding(0, 12, 0, 20)
+
+                isClickable = true
+                isFocusable = true
+
+                setOnClickListener {
+                    showAgentList()
+                }
+            }
+
+        memoryContainer.addView(backButton)
+
+        // Selected agent name
+        memoryTitle.apply {
+            textSize = 22f
+            setTextColor(Color.BLACK)
+            setPadding(0, 0, 0, 12)
+        }
+
+        memoryContainer.addView(memoryTitle)
+
+        // Memory content
+        memoryContent.apply {
             textSize = 15f
             setTextColor(Color.DKGRAY)
         }
 
-        addView(content)
+        val memoryScroll =
+            ScrollView(context).apply {
 
-        loadMemory()
+                addView(
+                    memoryContent,
+                    ScrollView.LayoutParams(
+                        ScrollView.LayoutParams.MATCH_PARENT,
+                        ScrollView.LayoutParams.WRAP_CONTENT
+                    )
+                )
+            }
+
+        memoryContainer.addView(
+            memoryScroll,
+            LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                0,
+                1f
+            )
+        )
+
+        addView(
+            memoryContainer,
+            LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                0,
+                1f
+            )
+        )
+
+        loadAgents()
     }
 
-    private fun loadMemory() {
+    private fun loadAgents() {
 
         executor.execute {
 
@@ -62,50 +146,195 @@ class MemoryScreen(
                 val agents =
                     api.getAgents()
 
-                if (agents.isEmpty()) {
-
-                    post {
-                        content.text =
-                            "No agents available."
-                    }
-
-                    return@execute
-                }
-
-                val agent =
-                    agents.first()
-
-                val memory =
-                    api.getMemory(agent.name)
-
                 post {
-
-                    content.text =
-                        if (memory.isBlank()) {
-                            "${agent.name}\n\nMemory is empty."
-                        } else {
-                            "${agent.name}\n\n$memory"
-                        }
+                    displayAgents(agents)
                 }
 
             } catch (exception: Exception) {
 
                 post {
 
-                    content.text =
+                    showError(
                         exception.message
-                            ?: "Could not load memory."
-
-                    content.setTextColor(
-                        Color.RED
+                            ?: "Could not load agents."
                     )
                 }
             }
         }
     }
 
+    private fun displayAgents(
+        agents: List<DeskAgent>
+    ) {
+
+        agentContainer.removeAllViews()
+
+        agentContainer.visibility = View.VISIBLE
+        memoryContainer.visibility = View.GONE
+
+        if (agents.isEmpty()) {
+
+            agentContainer.addView(
+                TextView(context).apply {
+                    text = "No agents available."
+                    textSize = 15f
+                    setTextColor(Color.GRAY)
+                }
+            )
+
+            return
+        }
+
+        for (agent in agents) {
+
+            val card =
+                LinearLayout(context).apply {
+
+                    orientation = VERTICAL
+
+                    setPadding(
+                        20,
+                        20,
+                        20,
+                        20
+                    )
+
+                    setBackgroundColor(
+                        Color.rgb(245, 245, 245)
+                    )
+
+                    isClickable = true
+                    isFocusable = true
+
+                    setOnClickListener {
+                        loadMemory(agent)
+                    }
+                }
+
+            // Agent name
+            card.addView(
+                TextView(context).apply {
+                    text = agent.name
+                    textSize = 20f
+                    setTextColor(Color.BLACK)
+                }
+            )
+
+            // Action description
+            card.addView(
+                TextView(context).apply {
+                    text = "View memory"
+                    textSize = 14f
+                    setTextColor(Color.DKGRAY)
+
+                    setPadding(
+                        0,
+                        8,
+                        0,
+                        0
+                    )
+                }
+            )
+
+            agentContainer.addView(
+                card,
+                LayoutParams(
+                    LayoutParams.MATCH_PARENT,
+                    LayoutParams.WRAP_CONTENT
+                ).apply {
+                    setMargins(
+                        0,
+                        0,
+                        0,
+                        12
+                    )
+                }
+            )
+        }
+    }
+
+    private fun loadMemory(
+        agent: DeskAgent
+    ) {
+
+        // Switch from agent list to memory view
+        agentContainer.visibility = View.GONE
+        memoryContainer.visibility = View.VISIBLE
+
+        memoryTitle.text = agent.name
+
+        memoryContent.apply {
+            text = "Loading memory..."
+            setTextColor(Color.DKGRAY)
+        }
+
+        executor.execute {
+
+            try {
+
+                val memory =
+                    api.getMemory(agent.name)
+
+                post {
+
+                    memoryContent.apply {
+
+                        text =
+                            if (memory.isBlank()) {
+                                "Memory is empty."
+                            } else {
+                                memory
+                            }
+
+                        setTextColor(Color.DKGRAY)
+                    }
+                }
+
+            } catch (exception: Exception) {
+
+                post {
+
+                    memoryContent.apply {
+
+                        text =
+                            exception.message
+                                ?: "Could not load memory."
+
+                        setTextColor(Color.RED)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showAgentList() {
+
+        memoryContainer.visibility = View.GONE
+        agentContainer.visibility = View.VISIBLE
+    }
+
+    private fun showError(
+        message: String
+    ) {
+
+        agentContainer.removeAllViews()
+
+        agentContainer.visibility = View.VISIBLE
+        memoryContainer.visibility = View.GONE
+
+        agentContainer.addView(
+            TextView(context).apply {
+                text = message
+                textSize = 15f
+                setTextColor(Color.RED)
+            }
+        )
+    }
+
     override fun onDetachedFromWindow() {
+
         executor.shutdownNow()
+
         super.onDetachedFromWindow()
     }
 }
