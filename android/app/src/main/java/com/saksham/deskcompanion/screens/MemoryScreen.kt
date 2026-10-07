@@ -61,9 +61,9 @@ class MemoryScreen(
 
         addView(
             agentContainer,
-            LayoutParams(
-                LayoutParams.MATCH_PARENT,
-                LayoutParams.WRAP_CONTENT
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
             )
         )
 
@@ -117,23 +117,15 @@ class MemoryScreen(
             }
 
         memoryContainer.addView(
-            memoryScroll,
-            LayoutParams(
-                LayoutParams.MATCH_PARENT,
-                0,
-                1f
-            )
-        )
 
         addView(
             memoryContainer,
-            LayoutParams(
-                LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
                 0,
                 1f
             )
         )
-
         loadAgents()
     }
 
@@ -238,9 +230,9 @@ class MemoryScreen(
 
             agentContainer.addView(
                 card,
-                LayoutParams(
-                    LayoutParams.MATCH_PARENT,
-                    LayoutParams.WRAP_CONTENT
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
                     setMargins(
                         0,
