@@ -15,7 +15,7 @@ import androidx.core.view.setPadding
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import com.saksham.deskcompanion.screens.AgentsScreen
-import com.saksham.deskcompanion.screens.ChatScreen
+
 import com.saksham.deskcompanion.screens.HomeScreen
 import com.saksham.deskcompanion.screens.MemoryScreen
 import com.saksham.deskcompanion.screens.SettingsScreen
@@ -498,10 +498,6 @@ class MainActivity : AppCompatActivity() {
             showAgentsScreen()
         }
 
-        addNavigationButton("Chat") {
-            showChatScreen()
-        }
-
         addNavigationButton("Workspace") {
             showWorkspaceScreen()
         }
@@ -578,12 +574,7 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun showChatScreen() {
 
-        showScreen(
-            ChatScreen(this, deskApi)
-        )
-    }
 
     private fun showWorkspaceScreen() {
 
