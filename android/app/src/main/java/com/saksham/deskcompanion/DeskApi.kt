@@ -24,6 +24,11 @@ data class WorkspaceItem(
     val size: Long
 )
 
+data class AgentArtifacts(
+    val agent: String,
+    val artifacts: JSONArray
+)
+
 data class ChatResponse(
     val agent: String,
     val response: String,
@@ -354,6 +359,30 @@ class DeskApi(
         )
             .getJSONArray("data")
     }
+    
+    
+	fun getAllArtifacts(): List<AgentArtifacts> {
+		val data = request(
+			"GET",
+			"/api/artifacts"
+		).getJSONArray("data")
+
+		val result = mutableListOf<AgentArtifacts>()
+
+		for (i in 0 until data.length()) {
+			val item = data.getJSONObject(i)
+
+			result.add(
+				AgentArtifacts(
+					agent = item.optString("agent"),
+					artifacts = item.optJSONArray("artifacts")
+						?: JSONArray()
+				)
+			)
+		}
+
+		return result
+}
 
     fun createAgent(
         name: String,

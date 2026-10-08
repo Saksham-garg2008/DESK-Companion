@@ -1,3 +1,4 @@
+
 package com.saksham.deskcompanion.screens
 
 import android.app.AlertDialog
@@ -7,8 +8,8 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.view.setPadding
+import com.saksham.deskcompanion.AgentArtifacts
 import com.saksham.deskcompanion.DeskApi
-import com.saksham.deskcompanion.WorkspaceItem
 import java.util.concurrent.Executors
 
 class WorkspaceScreen(
@@ -23,222 +24,192 @@ class WorkspaceScreen(
         LinearLayout(context)
 
     init {
-
         orientation = VERTICAL
         setPadding(32)
 
         addView(
             TextView(context).apply {
-                text = "Workspace"
+                text = "Artifacts"
                 textSize = 28f
                 setTextColor(Color.BLACK)
-                setPadding(0, 0, 0, 24)
+                setPadding(0, 0, 0, 8)
             }
         )
 
         addView(
             TextView(context).apply {
-                text = "DESK Workspace"
-                textSize = 18f
-                setTextColor(Color.BLACK)
-                setPadding(0, 0, 0, 16)
+                text = "Files created by your DESK agents"
+                textSize = 16f
+                setTextColor(Color.GRAY)
+                setPadding(0, 0, 0, 24)
             }
         )
 
         container.orientation = VERTICAL
 
-        addView(container)
+        addView(
+            ScrollView(context).apply {
+                addView(container)
+                layoutParams = LayoutParams(
+                    LayoutParams.MATCH_PARENT,
+                    0,
+                    1f
+                )
+            }
+        )
 
-        loadWorkspace()
+        loadArtifacts()
     }
 
-    private fun loadWorkspace() {
-
+    private fun loadArtifacts() {
         executor.execute {
-
             try {
-
-                val items =
-                    api.getWorkspace()
+                val artifacts = api.getAllArtifacts()
 
                 post {
-                    displayWorkspace(items)
+                    displayArtifacts(artifacts)
                 }
-
             } catch (exception: Exception) {
-
                 post {
                     showError(
                         exception.message
-                            ?: "Could not load workspace."
+                            ?: "Could not load artifacts."
                     )
                 }
             }
         }
     }
 
-    private fun displayWorkspace(
-        items: List<WorkspaceItem>
+    private fun displayArtifacts(
+        groups: List<AgentArtifacts>
     ) {
-
         container.removeAllViews()
 
-        if (items.isEmpty()) {
+        val nonEmptyGroups = groups.filter {
+            it.artifacts.length() > 0
+        }
 
+        if (nonEmptyGroups.isEmpty()) {
             container.addView(
                 TextView(context).apply {
-                    text = "Workspace is empty."
+                    text = "No artifacts have been created yet."
                     textSize = 15f
                     setTextColor(Color.GRAY)
+                    setPadding(8, 16, 8, 16)
                 }
             )
-
             return
         }
 
-        for (item in items) {
-
-            val fileView =
+        for (group in nonEmptyGroups) {
+            container.addView(
                 TextView(context).apply {
+                    text = group.agent
+                    textSize = 20f
+                    setTextColor(Color.BLACK)
+                    setPadding(0, 16, 0, 12)
+                }
+            )
 
-                    text =
-                        "${item.path}\n" +
-                        "${item.size} bytes"
+            for (i in 0 until group.artifacts.length()) {
+                val artifact =
+                    group.artifacts.getJSONObject(i)
 
-                    textSize = 15f
-                    setTextColor(Color.DKGRAY)
+                val filename =
+                    artifact.optString("filename", "Untitled")
 
-                    setPadding(
-                        20,
-                        20,
-                        20,
-                        20
-                    )
+                val type =
+                    artifact.optString("type", "file")
+
+                val language =
+                    artifact.optString("language", "")
+
+                val currentVersion =
+                    artifact.optInt("current_version", 1)
+
+                val versionCount =
+                    artifact.optInt("version_count", 1)
+
+                val details = buildString {
+                    append(type)
+
+                    if (language.isNotBlank()) {
+                        append(" · ")
+                        append(language)
+                    }
+
+                    append("\nVersion ")
+                    append(currentVersion)
+                    append(" of ")
+                    append(versionCount)
+                }
+
+                val card = LinearLayout(context).apply {
+                    orientation = VERTICAL
+                    setPadding(20)
 
                     setBackgroundColor(
-                        Color.rgb(
-                            245,
-                            245,
-                            245
-                        )
+                        Color.rgb(245, 245, 245)
+                    )
+
+                    addView(
+                        TextView(context).apply {
+                            text = filename
+                            textSize = 16f
+                            setTextColor(Color.BLACK)
+                        }
+                    )
+
+                    addView(
+                        TextView(context).apply {
+                            text = details
+                            textSize = 13f
+                            setTextColor(Color.DKGRAY)
+                            setPadding(0, 6, 0, 0)
+                        }
                     )
 
                     isClickable = true
 
                     setOnClickListener {
-                        openFile(item)
+                        showArtifactDetails(
+                            group.agent,
+                            filename,
+                            details
+                        )
                     }
                 }
 
-            container.addView(
-                fileView,
-                LayoutParams(
-                    LayoutParams.MATCH_PARENT,
-                    LayoutParams.WRAP_CONTENT
-                ).apply {
-                    setMargins(
-                        0,
-                        0,
-                        0,
-                        16
-                    )
-                }
-            )
-        }
-    }
-
-    private fun openFile(
-        item: WorkspaceItem
-    ) {
-
-        val loadingDialog =
-            AlertDialog.Builder(context)
-                .setTitle(item.name)
-                .setMessage("Loading file...")
-                .setCancelable(false)
-                .create()
-
-        loadingDialog.show()
-
-        executor.execute {
-
-            try {
-
-                val content =
-                    api.getWorkspaceFile(
-                        item.path
-                    )
-
-                post {
-
-                    loadingDialog.dismiss()
-
-                    showFileContent(
-                        item.name,
-                        content
-                    )
-                }
-
-            } catch (exception: Exception) {
-
-                post {
-
-                    loadingDialog.dismiss()
-
-                    showErrorDialog(
-                        exception.message
-                            ?: "Could not open file."
-                    )
-                }
+                container.addView(
+                    card,
+                    LayoutParams(
+                        LayoutParams.MATCH_PARENT,
+                        LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        setMargins(0, 0, 0, 12)
+                    }
+                )
             }
         }
     }
 
-    private fun showFileContent(
-        name: String,
-        content: String
+    private fun showArtifactDetails(
+        agentName: String,
+        filename: String,
+        details: String
     ) {
-
-        val textView =
-            TextView(context).apply {
-
-                text = content
-
-                textSize = 14f
-
-                setTextColor(
-                    Color.DKGRAY
-                )
-
-                setPadding(
-                    24,
-                    24,
-                    24,
-                    24
-                )
-
-                setTextIsSelectable(true)
-            }
-
-        val scrollView =
-            ScrollView(context).apply {
-                addView(textView)
-            }
-
         AlertDialog.Builder(context)
-            .setTitle(name)
-            .setView(scrollView)
-            .setPositiveButton(
-                "Close",
-                null
+            .setTitle(filename)
+            .setMessage(
+                "Created by: $agentName\n\n$details\n\n" +
+                    "Opening artifact contents will be added " +
+                    "after the DESK content endpoint is implemented."
             )
+            .setPositiveButton("Close", null)
             .show()
     }
 
-    private fun showError(
-        message: String
-    ) {
-
+    private fun showError(message: String) {
         container.removeAllViews()
 
         container.addView(
@@ -250,24 +221,8 @@ class WorkspaceScreen(
         )
     }
 
-    private fun showErrorDialog(
-        message: String
-    ) {
-
-        AlertDialog.Builder(context)
-            .setTitle("Could not open file")
-            .setMessage(message)
-            .setPositiveButton(
-                "OK",
-                null
-            )
-            .show()
-    }
-
     override fun onDetachedFromWindow() {
-
         executor.shutdownNow()
-
         super.onDetachedFromWindow()
     }
 }
