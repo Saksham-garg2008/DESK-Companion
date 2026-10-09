@@ -1,5 +1,6 @@
 package com.saksham.deskcompanion
-
+import com.saksham.deskcompanion.design.DeskDesign
+import com.saksham.deskcompanion.design.DeskShell
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
@@ -432,111 +433,60 @@ class MainActivity : AppCompatActivity() {
     // Main Companion interface
     // -------------------------------------------------------------------------
 
-    private fun buildMainScreen() {
+	private fun buildMainScreen() {
+		val credentials = getSavedCredentials()
 
-        val credentials = getSavedCredentials()
+		if (credentials == null) {
+			buildPairingScreen()
+			return
+		}
 
-        if (credentials == null) {
-            buildPairingScreen()
-            return
-        }
+		connectedHost = credentials.host
+		connectedPort = credentials.port
 
-        connectedHost = credentials.host
-        connectedPort = credentials.port
-        deskApi = DeskApi(
-            host = credentials.host,
-            port = credentials.port,
-            deviceId = credentials.deviceId,
-            token = credentials.token
-        )
+		deskApi = DeskApi(
+			host = credentials.host,
+			port = credentials.port,
+			deviceId = credentials.deviceId,
+			token = credentials.token
+		)
 
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-        }
+		val root = LinearLayout(this).apply {
+			orientation = LinearLayout.VERTICAL
+			DeskDesign.styleScreen(this)
+		}
 
-        screenContainer = FrameLayout(this)
+		screenContainer = FrameLayout(this)
 
-        navigationBar = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            setBackgroundColor(Color.WHITE)
-        }
+		val header = DeskShell.createHeader(this) {
+			showIndexScreen()
+		}
 
-        root.addView(
-            screenContainer,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                0,
-                1f
-            )
-        )
+		root.addView(
+			header,
+			LinearLayout.LayoutParams(
+				LinearLayout.LayoutParams.MATCH_PARENT,
+				DeskDesign.dp(this, 64)
+			)
+		)
 
-        root.addView(
-            navigationBar,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                64
-            )
-        )
+		root.addView(
+			screenContainer,
+			LinearLayout.LayoutParams(
+				LinearLayout.LayoutParams.MATCH_PARENT,
+				0,
+				1f
+			)
+		)
 
-        setContentView(root)
+		setContentView(root)
 
-        buildNavigation()
+		showIndexScreen()
+	}
 
-        showHomeScreen()
-    }
 
-    private fun buildNavigation() {
 
-        navigationBar.removeAllViews()
-
-        addNavigationButton("Home") {
-            showHomeScreen()
-        }
-
-        addNavigationButton("Agents") {
-            showAgentsScreen()
-        }
-
-        addNavigationButton("Workspace") {
-            showWorkspaceScreen()
-        }
-
-        addNavigationButton("Memory") {
-            showMemoryScreen()
-        }
-
-        addNavigationButton("Settings") {
-            showSettingsScreen()
-        }
-    }
-
-    private fun addNavigationButton(
-        title: String,
-        action: () -> Unit
-    ) {
-
-        val button = TextView(this).apply {
-            text = title
-            textSize = 13f
-            gravity = Gravity.CENTER
-            setTextColor(Color.DKGRAY)
-            setPadding(8, 0, 8, 0)
-
-            setOnClickListener {
-                action()
-            }
-        }
-
-        navigationBar.addView(
-            button,
-            LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                1f
-            )
-        )
-    }
+    
 
     // -------------------------------------------------------------------------
     // Screen switching
@@ -554,6 +504,19 @@ class MainActivity : AppCompatActivity() {
             )
         )
     }
+    
+	
+	private fun showIndexScreen() {
+		showScreen(
+			DeskShell.createIndex(
+				context = this,
+				onAgents = { showAgentsScreen() },
+				onMemory = { showMemoryScreen() },
+				onArtifacts = { showWorkspaceScreen() },
+				onSettings = { showSettingsScreen() }
+			)
+		)
+	}
 
     private fun showHomeScreen() {
 
