@@ -208,9 +208,7 @@ class AgentsScreen(
 
                             textSize = 14f
 
-                            setTextColor(
-                                Color.DKGRAY
-                            )
+                            setTextColor(colors.secondary)
 
                             setPadding(
                                 24,
