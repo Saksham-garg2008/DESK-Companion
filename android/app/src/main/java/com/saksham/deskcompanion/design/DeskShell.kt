@@ -1,4 +1,4 @@
-```kotlin
+
 package com.saksham.deskcompanion.design
 
 import android.content.Context
@@ -182,4 +182,3 @@ object DeskShell {
         return screen
     }
 }
-```
