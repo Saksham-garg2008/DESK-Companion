@@ -1,5 +1,5 @@
 package com.saksham.deskcompanion.screens
-
+import com.saksham.deskcompanion.design.DeskDesign
 import android.content.Context
 import android.graphics.Color
 import android.view.View
@@ -21,6 +21,9 @@ class MemoryScreen(
 
     private val agentContainer =
         LinearLayout(context)
+        
+    private val colors =
+    DeskDesign.palette(context)
 
     private val memoryContainer =
         LinearLayout(context)
@@ -41,7 +44,7 @@ class MemoryScreen(
             TextView(context).apply {
                 text = "Memory"
                 textSize = 28f
-                setTextColor(Color.BLACK)
+                setTextColor(colors.foreground)
                 setPadding(0, 0, 0, 24)
             }
         )
@@ -51,7 +54,7 @@ class MemoryScreen(
             TextView(context).apply {
                 text = "Select an agent to view its DESK memory."
                 textSize = 16f
-                setTextColor(Color.DKGRAY)
+                setTextColor(colors.secondary)
                 setPadding(0, 0, 0, 20)
             }
         )
@@ -76,7 +79,7 @@ class MemoryScreen(
             TextView(context).apply {
                 text = "← All agents"
                 textSize = 16f
-                setTextColor(Color.BLACK)
+                setTextColor(colors.foreground)
                 setPadding(0, 12, 0, 20)
 
                 isClickable = true
@@ -92,7 +95,7 @@ class MemoryScreen(
         // Selected agent name
         memoryTitle.apply {
             textSize = 22f
-            setTextColor(Color.BLACK)
+            setTextColor(colors.foreground)
             setPadding(0, 0, 0, 12)
         }
 
@@ -100,9 +103,11 @@ class MemoryScreen(
 
         // Memory content
         memoryContent.apply {
-            textSize = 15f
-            setTextColor(Color.DKGRAY)
-        }
+			textSize = 15f
+			setTextColor(colors.secondary)
+			setLineSpacing(4f, 1.0f)
+			setPadding(0, 8, 0, 16)
+		}
 
         // Scrollable memory area
         val memoryScroll =
@@ -173,7 +178,7 @@ class MemoryScreen(
                 TextView(context).apply {
                     text = "No agents available."
                     textSize = 15f
-                    setTextColor(Color.GRAY)
+                    setTextColor(colors.secondary)
                 }
             )
 
@@ -194,9 +199,7 @@ class MemoryScreen(
                         20
                     )
 
-                    setBackgroundColor(
-                        Color.rgb(245, 245, 245)
-                    )
+                    DeskDesign.applyOutlinedSurface(this)
 
                     isClickable = true
                     isFocusable = true
@@ -211,7 +214,7 @@ class MemoryScreen(
                 TextView(context).apply {
                     text = agent.name
                     textSize = 20f
-                    setTextColor(Color.BLACK)
+                    setTextColor(colors.foreground)
                 }
             )
 
@@ -220,7 +223,7 @@ class MemoryScreen(
                 TextView(context).apply {
                     text = "View memory"
                     textSize = 14f
-                    setTextColor(Color.DKGRAY)
+                    setTextColor(colors.secondary)
 
                     setPadding(
                         0,
@@ -260,7 +263,7 @@ class MemoryScreen(
 
         memoryContent.apply {
             text = "Loading memory..."
-            setTextColor(Color.DKGRAY)
+            setTextColor(colors.secondary)
         }
 
         executor.execute {
@@ -281,7 +284,7 @@ class MemoryScreen(
                                 memory
                             }
 
-                        setTextColor(Color.DKGRAY)
+                        setTextColor(colors.secondary)
                     }
                 }
 
