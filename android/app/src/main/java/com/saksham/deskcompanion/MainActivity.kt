@@ -39,6 +39,10 @@ class MainActivity : AppCompatActivity() {
 
     private val executor = Executors.newSingleThreadExecutor()
 
+	private val colors by lazy {
+		DeskDesign.palette(this)
+	}
+
     private lateinit var screenContainer: FrameLayout
     private lateinit var navigationBar: LinearLayout
 
@@ -99,18 +103,21 @@ class MainActivity : AppCompatActivity() {
     private fun buildPairingScreen() {
 
         val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(48)
-        }
+			orientation = LinearLayout.VERTICAL
+			setPadding(48)
+			DeskDesign.styleScreen(this)
+		}
 
         val title = TextView(this).apply {
             text = "DESK Companion"
             textSize = 28f
+            setTextColor(colors.foreground)
         }
 
         val subtitle = TextView(this).apply {
             text = "Connect to your DESK desktop application."
             textSize = 16f
+            setTextColor(colors.secondary)
         }
 
         val scanButton = Button(this).apply {
@@ -124,17 +131,21 @@ class MainActivity : AppCompatActivity() {
         val divider = TextView(this).apply {
             text = "\nOR\n"
             textSize = 16f
+            setTextColor(colors.secondary)
         }
 
         val codeLabel = TextView(this).apply {
             text = "Enter 6-digit code"
             textSize = 16f
+            setTextColor(colors.foreground)
         }
 
         codeInput = EditText(this).apply {
             hint = "123456"
             inputType = android.text.InputType.TYPE_CLASS_NUMBER
             maxLines = 1
+            setTextColor(colors.foreground)
+            setHintTextColor(colors.secondary)
         }
 
         val connectButton = Button(this).apply {
@@ -401,16 +412,19 @@ class MainActivity : AppCompatActivity() {
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(48)
+            DeskDesign.styleScreen(this)
         }
 
         val title = TextView(this).apply {
             text = "DESK Companion"
             textSize = 28f
+            setTextColor(colors.foreground)
         }
 
         val connectionStatus = TextView(this).apply {
             text = "● Connected"
             textSize = 18f
+            setTextColor(colors.foreground)
         }
 
         val host =
@@ -434,6 +448,7 @@ class MainActivity : AppCompatActivity() {
         val connectionInfo = TextView(this).apply {
             text = "Connected to DESK at\n$host:$port"
             textSize = 16f
+            setTextColor(colors.secondary)
         }
 
         val continueButton = Button(this).apply {
