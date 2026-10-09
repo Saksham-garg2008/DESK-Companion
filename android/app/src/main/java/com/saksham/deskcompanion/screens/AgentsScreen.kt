@@ -1,5 +1,6 @@
 package com.saksham.deskcompanion.screens
-
+import com.saksham.deskcompanion.design.DeskDesign
+import android.view.View
 import android.content.Context
 import android.graphics.Color
 import android.widget.LinearLayout
@@ -21,7 +22,8 @@ class AgentsScreen(
 
     private val container =
         LinearLayout(context)
-
+	private val colors =
+		DeskDesign.palette(context)
     init {
 
         orientation = VERTICAL
@@ -31,7 +33,7 @@ class AgentsScreen(
             TextView(context).apply {
                 text = "Agents"
                 textSize = 28f
-                setTextColor(Color.BLACK)
+                setTextColor(colors.foreground)
                 setPadding(0, 0, 0, 24)
             }
         )
@@ -89,7 +91,7 @@ class AgentsScreen(
                 TextView(context).apply {
                     text = "No agents found."
                     textSize = 15f
-                    setTextColor(Color.GRAY)
+                    setTextColor(colors.secondary)
                 }
             )
 
@@ -109,20 +111,14 @@ class AgentsScreen(
                         20
                     )
 
-                    setBackgroundColor(
-                        Color.rgb(
-                            245,
-                            245,
-                            245
-                        )
-                    )
+                    DeskDesign.applyOutlinedSurface(this)
                 }
 
             card.addView(
                 TextView(context).apply {
                     text = agent.name
                     textSize = 20f
-                    setTextColor(Color.BLACK)
+                    setTextColor(colors.foreground)
                 }
             )
 
@@ -171,7 +167,7 @@ class AgentsScreen(
             TextView(context).apply {
                 text = message
                 textSize = 15f
-                setTextColor(Color.RED)
+                setTextColor(colors.foreground)
             }
         )
     }
