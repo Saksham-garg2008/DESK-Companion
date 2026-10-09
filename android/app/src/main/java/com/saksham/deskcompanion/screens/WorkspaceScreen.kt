@@ -1,6 +1,6 @@
 
 package com.saksham.deskcompanion.screens
-
+import com.saksham.deskcompanion.design.DeskDesign
 import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Color
@@ -22,7 +22,10 @@ class WorkspaceScreen(
 
     private val container =
         LinearLayout(context)
-
+	
+	private val colors =
+		DeskDesign.palette(context)
+    
     init {
         orientation = VERTICAL
         setPadding(32)
@@ -31,7 +34,7 @@ class WorkspaceScreen(
             TextView(context).apply {
                 text = "Artifacts"
                 textSize = 28f
-                setTextColor(Color.BLACK)
+                setTextColor(colors.foreground)
                 setPadding(0, 0, 0, 8)
             }
         )
@@ -40,7 +43,7 @@ class WorkspaceScreen(
             TextView(context).apply {
                 text = "Files created by your DESK agents"
                 textSize = 16f
-                setTextColor(Color.GRAY)
+                setTextColor(colors.secondary)
                 setPadding(0, 0, 0, 24)
             }
         )
@@ -94,7 +97,7 @@ class WorkspaceScreen(
                 TextView(context).apply {
                     text = "No artifacts have been created yet."
                     textSize = 15f
-                    setTextColor(Color.GRAY)
+                    setTextColor(colors.secondary)
                     setPadding(8, 16, 8, 16)
                 }
             )
@@ -106,7 +109,7 @@ class WorkspaceScreen(
                 TextView(context).apply {
                     text = group.agent
                     textSize = 20f
-                    setTextColor(Color.BLACK)
+                    setTextColor(colors.foreground)
                     setPadding(0, 16, 0, 12)
                 }
             )
@@ -148,28 +151,28 @@ class WorkspaceScreen(
                     orientation = VERTICAL
                     setPadding(20)
 
-                    setBackgroundColor(
-                        Color.rgb(245, 245, 245)
-                    )
+                    DeskDesign.applyOutlinedSurface(this)
 
                     addView(
                         TextView(context).apply {
                             text = filename
                             textSize = 16f
-                            setTextColor(Color.BLACK)
+                            setTextColor(colors.foreground)
                         }
                     )
 
                     addView(
                         TextView(context).apply {
                             text = details
-                            textSize = 13f
-                            setTextColor(Color.DKGRAY)
-                            setPadding(0, 6, 0, 0)
+                            textSize = 14f
+                            setTextColor(colors.secondary)
+                            setLineSpacing(2f, 1.0f)
+							setPadding(0, 8, 0, 0)
                         }
                     )
 
                     isClickable = true
+                    isFocusable = true
 
                     setOnClickListener {
                         showArtifactDetails(
@@ -216,7 +219,7 @@ class WorkspaceScreen(
             TextView(context).apply {
                 text = message
                 textSize = 15f
-                setTextColor(Color.RED)
+                setTextColor(colors.foreground)
             }
         )
     }

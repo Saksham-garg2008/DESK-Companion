@@ -298,7 +298,7 @@ class MemoryScreen(
                             exception.message
                                 ?: "Could not load memory."
 
-                        setTextColor(Color.RED)
+                        setTextColor(colors.foreground)
                     }
                 }
             }
@@ -324,7 +324,7 @@ class MemoryScreen(
             TextView(context).apply {
                 text = message
                 textSize = 15f
-                setTextColor(Color.RED)
+                setTextColor(colors.foreground)
             }
         )
     }
