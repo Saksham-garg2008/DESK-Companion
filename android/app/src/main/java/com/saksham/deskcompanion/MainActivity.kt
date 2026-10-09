@@ -2,6 +2,10 @@ package com.saksham.deskcompanion
 import com.saksham.deskcompanion.design.DeskDesign
 import com.saksham.deskcompanion.design.DeskShell
 import android.graphics.Color
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import android.view.View
 import android.os.Bundle
 import android.view.Gravity
 import android.widget.Button
@@ -44,6 +48,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         qrScanner = registerForActivityResult(ScanContract()) { result ->
             if (result.contents != null) {
@@ -57,6 +62,35 @@ class MainActivity : AppCompatActivity() {
             buildPairingScreen()
         }
     }
+	// -------------------------------------------------------------------------
+    // Helper for automatically adjusting to different screen sizes. 				
+    // -------------------------------------------------------------------------
+    
+	private fun applySafeArea(view: View) {
+		val initialLeft = view.paddingLeft
+		val initialTop = view.paddingTop
+		val initialRight = view.paddingRight
+		val initialBottom = view.paddingBottom
+
+		ViewCompat.setOnApplyWindowInsetsListener(view) { target, insets ->
+			val systemBars = insets.getInsets(
+				WindowInsetsCompat.Type.systemBars() or
+					WindowInsetsCompat.Type.displayCutout()
+			)
+
+			target.setPadding(
+				initialLeft + systemBars.left,
+				initialTop + systemBars.top,
+				initialRight + systemBars.right,
+				initialBottom + systemBars.bottom
+			)
+
+			insets
+		}
+
+		ViewCompat.requestApplyInsets(view)
+	}
+
 
     // -------------------------------------------------------------------------
     // Pairing screen
@@ -128,8 +162,8 @@ class MainActivity : AppCompatActivity() {
         layout.addView(connectButton)
 
         layout.addView(statusText)
-
-        setContentView(layout)
+		applySafeArea(layout)
+		setContentView(layout)
     }
 
     private fun startQrScanner() {
@@ -425,7 +459,7 @@ class MainActivity : AppCompatActivity() {
         layout.addView(continueButton)
 
         layout.addView(disconnectButton)
-
+		applySafeArea(layout)
         setContentView(layout)
     }
 
@@ -478,7 +512,7 @@ class MainActivity : AppCompatActivity() {
 				1f
 			)
 		)
-
+		applySafeArea(root)
 		setContentView(root)
 
 		showIndexScreen()
